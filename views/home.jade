@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+html(lang='en')
+  head
+    title= 'Your Twitter Streaming Timeline'
+    link(rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css')
+    link(rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css')
+    link(rel='stylesheet' href='css/cover.css')
+    script(src='//ajax.googleapis.com/ajax/libs/jquery/2.0.0/jquery.min.js')
+    script(src='https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js')
+    script(src='/socket.io/socket.io.js')
+  body
+    .site-wrapper
+      .site-wrapper-inner
+        .cover-container
+          .masthead.clearfix
+            .inner
+              h3.masthead-brand Timeline Streaming
+              ul.nav.masthead-nav
+                li.active 
+                  a(href='/') Home
+                li
+                  a(href='#') Features
+                li
+                  a(href='#') Contact
+                li
+                  a(href='/logout') Logout
+          script
+            include js/index.js
+          .inner.cover
+            ul#timeline
+
+          .mastfoot
+            .inner
+              p Copyright &copy; 2014 ○○○○○○○○○ All Rights Reserved.
