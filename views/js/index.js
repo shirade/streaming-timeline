@@ -1,31 +1,34 @@
 var socket = io();
 
 function init () {
-  socket.emit('update');
+  socket.emit('init');
 };
 
-var options = {
-  weekday: "long", year: "numeric", month: "short",
-  day: "numeric", hour: "2-digit", minute: "2-digit"
-};
-
-socket.on('update', function (msg) {
+socket.on('init', function (tweets) {
   var timeline = $('#timeline');
-  if (msg.hasOwnProperty('errors')) {
-    timeline.append('<li class="tweet" style="text-align:center;">I am sorry.<br>Now we can\'t access new tweets because of over access.<br>After 15 minutes, please try again.</li>');
-  } else {
-    timeline.empty();
-    for (var i = 0; i < msg.length; i++) {
-      var tweet = msg[i];
-      timeline.append('<li class="tweet">' +  tweet.text + '<br> - ' + tweet.user.name + ' posted at ' + (new Date(tweet.created_at)).toLocaleTimeString("ja-JP") +'</li>');
-    }
-  }
-  setTimeout(function () {
-    socket.emit('update');
-  }, 90 * 1000);
+  for (var i = 0; i < tweets.length; i++) {
+    var tweet = tweets[i];
+    // 関数にしてみる
+    timeline.append(tweetUL(tweet));
+  };
 });
 
- window.onload=init;
- window.onunload=function () {
-   socket.emit('unconnect');
- }
+socket.on('tweet', function (tweet) {
+  $('#timeline .tweet:last').remove();
+  $('#timeline').prepend(tweetUL(tweet));
+});
+
+socket.on('delete', function (tweet) {
+  $('#timeline .tweet[uid="' + tweet.id + '"]').remove();
+});
+
+window.onload = init;
+window.onunload = function () {
+  socket.emit('unconnect');
+};
+
+// tweet の li　要素を作る関数
+// 独自に使っても良い属性を検索する
+function tweetUL (tweet) {
+  return '<li class="tweet" uid="' + tweet.id + '">' +  tweet.text + '<div class="footer"> - ' + tweet.user.name + ' posted at ' + (new Date(tweet.created_at)).toLocaleString("ja-JP") +'</div></li>';
+}
