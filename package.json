@@ -4,7 +4,8 @@
   "description": "Twitter Client with Node.js, Express, Passport and Socket.io",
   "main": "index.js",
   "scripts": {
-    "test": "exit 0"
+    "pretest": "mongod --dbpath data/db --logpath var/log/mongodb.test.log &",
+    "test": "node_modules/.bin/istanbul cover test/runner.js"
   },
   "repository": {
     "type": "git",
@@ -17,14 +18,16 @@
   },
   "homepage": "https://github.com/shirade/twitter-with-socketio",
   "devDependencies": {
+    "async": "^0.9.0",
     "istanbul": "^0.3.2",
-    "mocha": "^1.21.5"
+    "mocha": "^1.21.5",
+    "request": "^2.47.0",
+    "socket.io-client": "^1.2.0",
+    "tough-cookie": "^0.12.1"
   },
   "dependencies": {
-    "body-parser": "^1.9.0",
     "bootstrap": "^3.2.0",
     "connect-mongo": "^0.4.1",
-    "cookie-parser": "^1.3.3",
     "express": "^4.9.7",
     "express-session": "^1.8.2",
     "jade": "^1.7.0",

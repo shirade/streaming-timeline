@@ -1,120 +1,39 @@
-var p = console.log;
+var l = console.log;
+var e = console.error;
 
 var qs = require('querystring');
 var path = require('path');
 
 var app = require('express')();
-var httpd = require('http').Server(app);
+var server = require('http').Server(app);
 var passport = require('passport');
 var TwitterStrategy = require('passport-twitter').Strategy;
 var Twit = require('twit')
 
-var io = require('socket.io')(httpd);
+var io = require('socket.io')(server);
 var db = require('./lib/db');
 
 app.set('views', './views');
 app.set('view engine', 'jade');
-
-var cookieParser = require('cookie-parser');
-//var bodyParser = require('body-parser');
 var session = require('express-session');
-var connectMongo = require('connect-mongo')(session);
 
+var connectMongo = require('connect-mongo')(session);
 var sessionStore = new connectMongo({
   db: 'twitter',
   collection: 'sessions'
 });
 
-app.use(cookieParser());
-//app.use(bodyParser());
 app.use(session({
   secret: 'secret',
+  cookie: { 
+    //maxAge: 12 * 60 * 60 * 1000
+  },
   store: sessionStore,
   resave: true,
   saveUninitialized: true
 }));
 app.use(passport.initialize());
 app.use(passport.session());
-
-function trimTweets (timeline) {
-  var tweetArray = [];
-  for (var i = 0; i < timeline.length; i++) {
-    tweetArray.push(trimTweet(timeline[i]));
-  }
-  return tweetArray;
-}
-
-function trimTweet (tweet) {
-  return {
-    created_at: tweet.created_at,
-    id: tweet.id,
-    text: tweet.text,
-    user: {
-      id: tweet.user.id,
-      name: tweet.user.name,
-      screen_name: tweet.user.screen_name
-    }
-  };
-};
-
-io.on('connection', function(socket){
-  p(socket.id + ': connected at ' + Date());
-
-  var cookie = qs.parse(socket.handshake.headers.cookie.replace(' ', ''), ';', '=');
-  var sid = cookie['connect.sid'].split('.')[0].slice(2);
-  var stream;
-  sessionStore.get(sid, function (error, session) {
-    cookie = session.passport.user || null;
-    if (cookie == null) return;
-    var twit = new Twit({
-      consumer_key: process.env['NODE_CONSUMER_KEY'],
-      consumer_secret: process.env['NODE_CONSUMER_SECRET'],
-      access_token: cookie.token,
-      access_token_secret: cookie.tokenSecret
-    });
-    twit.get('statuses/home_timeline', 
-      {
-        trim_user: false,
-        count: 10,
-        contributor_details: false,
-        include_entities: false
-      }, function (error, data, response) {
-        if (error) console.error(error);
-        db.storeUser({
-          id: cookie.id,
-          name: cookie.name,
-          screenName: cookie.screenName,
-          timeline: trimTweets(data)
-        });
-    });
-    stream = twit.stream('user');
-    stream.on('tweet', function (tweet) {
-      p('= = = = = = Stream.on tweet event = = = = = =');
-      var trimmedTweet = trimTweet(tweet)
-      io.to(socket.id).emit('tweet', trimmedTweet);
-      db.pushTweet(trimmedTweet, cookie.id);
-    });
-    stream.on('delete', function (msg) {
-      p('= = = = = = Stream.on delete event = = = = = =');
-      p(msg.delete.status);
-      io.to(socket.id).emit('delete', msg.delete.status);
-      db.popTweet(msg.delete.status);
-    });
-  });
-
-  socket.on('init', function () {
-    setTimeout(function() {
-      db.getTimeline(cookie.id, function (error, timeline) {
-        io.to(socket.id).emit('init', timeline);
-      });
-    }, 3000);
-  });
-  
-  socket.on('unconnect', function () {
-    p(socket.id + ': unconnected at ' + Date());
-    stream.stop();
-  });
-});
 
 var ts = new TwitterStrategy({
   consumerKey: process.env['NODE_CONSUMER_KEY'],
@@ -142,29 +61,106 @@ passport.deserializeUser(function(obj, done) {
 
 passport.use(ts);
 
+io.on('connection', function(socket){
+  try {
+    var sid = getSID(socket);
+    l(sid + ': connected at ' + Date());
+    var stream, twit, passportSession;
+    sessionStore.get(sid, function (error, session) {
+      passportSession = session.passport.user || null;
+      if (passportSession == null) return;
+      twit = new Twit({
+        consumer_key: process.env['NODE_CONSUMER_KEY'],
+        consumer_secret: process.env['NODE_CONSUMER_SECRET'],
+        access_token: passportSession.token,
+        access_token_secret: passportSession.tokenSecret
+      });
+      stream = twit.stream('user');
+      stream.on('tweet', function (tweet) {
+        var trimmedTweet = trimTweet(tweet);
+        db.pushTweet(trimmedTweet, passportSession.id, function (error, user) {
+          io.to(socket.id).emit('new tweet', trimmedTweet);
+        });
+      }).on('delete', function (msg) {
+        db.popTweet(msg.delete.status, function (error, user) {
+          io.to(socket.id).emit('delete tweet', msg.delete.status);
+        });
+      });
+    });
+  } catch (error) {
+    e(error);
+    io.to(socket.id).emit('redirect index');
+  }
+
+  socket.on('init', function () {
+    l('= = = = = = socket.on init = = = = = =');
+    try {
+      twit.get('statuses/home_timeline', 
+        {
+          trim_user: false,
+          count: 50,
+          contributor_details: false,
+          include_entities: false
+        }, function (error, data, response) {
+          if (error) {
+            console.error(error);
+          } else {
+            var timeline = trimTweets(data);
+            db.storeUser({
+              id: passportSession.id,
+              name: passportSession.name,
+              screenName: passportSession.screenName,
+              timeline: timeline
+            }, function (error, user) {
+              timeline.splice(5,50);
+              io.to(socket.id).emit('init', timeline);
+            });
+          }
+      });
+    } catch (error) {
+      e(error);
+      io.to(socket.id).emit('redirect index');
+    }
+  });
+  socket.on('tweet', function () {
+    db.getFifthTweet(passportSession.id, function (error, tweet) {
+      io.to(socket.id).emit('supplemental tweet', tweet);
+    });
+  }).on('unconnect', function () {
+    l(sid + ': unconnected at ' + Date());
+    if (stream) {
+      stream.stol();
+    }
+  });
+});
+
 app.get('/', function (request, response) {
+  //l(request.headers);
   response.render('index');
 });
 
-app.get('/home', function (request, response) {
-  if (typeof request.session.passport.user === 'undefined') {
-    request.session.passport.user = null;
-    response.redirect('/');
-  } else if (request.session.passport.user === null) {
-    response.redirect('/');
-  } else {
-    response.render('home');
-  }
-});
+function authenticate (request, response, next) {
+  //l('= = = = = = = = = = = = authenticate = = = = = = = = = = = =');
+  sessionStore.get(request.sessionID, function (error, session) {
+    if (session && session.passport.user.id) {
+      //l(request.sessionID + ': Authenticated');
+      next();
+    } else {
+      //l(request.sessionID + ': Not authenticated');
+      // statusCode 401 is Unauthorized
+      response.redirect(401, '/');
+    }
+  });
+};
 
-app.get('/css/cover.css', function (request, response) {
-  response.sendFile(path.join(__dirname + '/views/css/cover.css'));
+app.get('/home', authenticate, function (request, response) {
+  response.render('home');
 });
-
 
 app.get('/logout', function (request, response) {
-  request.session.passport.user = null;;
-  response.redirect('/');
+  request.session.destroy(function(error) {
+    response.redirect('/');
+  });
 });
 
 app.get('/oauth/twitter/auth', passport.authenticate('twitter'));
@@ -173,6 +169,10 @@ app.get('/oauth/twitter/callback', passport.authenticate('twitter', {
   successRedirect: '/home',
   failureRedirect: '/' 
 }));
+
+app.get('/css/cover.css', function (request, response) {
+  response.sendFile(path.join(__dirname + '/views/css/cover.css'));
+});
 
 /**
   Abnormal Case
@@ -188,7 +188,43 @@ app.all('/*', function (request, response) {
 /**
   Start server 
 **/
-httpd.listen(3000, function () {
-  p('Listening at http://localhost:3000/')
-});
+if (require.main === module) {
+  server.listen(3000, function () {
+    l('Listening at http://localhost:3000/');
+    db.connect('mongodb://localhost/twitter');
+  });
+};
+
+// supplemental function
+
+function trimTweets (timeline) {
+  var tweetArray = [];
+  for (var i = 0; i < timeline.length; i++) {
+    tweetArray.push(trimTweet(timeline[i]));
+  }
+  return tweetArray;
+}
+
+function trimTweet (tweet) {
+  return {
+    created_at: tweet.created_at,
+    id: tweet.id,
+    text: tweet.text,
+    user: {
+      id: tweet.user.id,
+      name: tweet.user.name,
+      screen_name: tweet.user.screen_name
+    }
+  };
+};
+
+function getSID (socket) {
+  var obj = qs.parse(socket.handshake.headers.cookie.replace(' ', ''), ';', '=');
+  return obj['connect.sid'].split('.')[0].slice(2);
+};
+
+module.exports.server = server;
+module.exports.db = db;
+module.exports.sessionStore = sessionStore;
+module.exports.trimTweets = trimTweets;
 

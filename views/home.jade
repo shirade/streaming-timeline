@@ -16,16 +16,11 @@ html(lang='en')
             .inner
               h3.masthead-brand Timeline Streaming
               ul.nav.masthead-nav
-                li.active 
-                  a(href='/') Home
-                li
-                  a(href='#') Features
-                li
-                  a(href='#') Contact
                 li
                   a(href='/logout') Logout
           script
-            include js/index.js
+            include js/socketio.js
+            include js/helper.js
           .inner.cover
             ul#timeline
 
