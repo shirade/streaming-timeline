@@ -1,7 +1,7 @@
 var Mocha = require('mocha');
 var mocha = new Mocha;
 
-mocha.addFile(__dirname + '/socketio');
+mocha.addFile(__dirname + '/helper');
 mocha.addFile(__dirname + '/db');
 mocha.addFile(__dirname + '/index');
 

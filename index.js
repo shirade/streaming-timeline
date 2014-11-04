@@ -26,7 +26,7 @@ var sessionStore = new connectMongo({
 app.use(session({
   secret: 'secret',
   cookie: { 
-    //maxAge: 12 * 60 * 60 * 1000
+    maxAge: 12 * 60 * 60 * 1000
   },
   store: sessionStore,
   resave: true,
@@ -64,7 +64,7 @@ passport.use(ts);
 io.on('connection', function(socket){
   try {
     var sid = getSID(socket);
-    l(sid + ': connected at ' + Date());
+    //l(sid + ': connected at ' + Date());
     var stream, twit, passportSession;
     sessionStore.get(sid, function (error, session) {
       passportSession = session.passport.user || null;
@@ -88,37 +88,31 @@ io.on('connection', function(socket){
       });
     });
   } catch (error) {
-    e(error);
     io.to(socket.id).emit('redirect index');
   }
 
   socket.on('init', function () {
-    l('= = = = = = socket.on init = = = = = =');
+    //l('= = = = = = socket.on init = = = = = =');
     try {
-      twit.get('statuses/home_timeline', 
-        {
-          trim_user: false,
-          count: 50,
-          contributor_details: false,
-          include_entities: false
-        }, function (error, data, response) {
-          if (error) {
-            console.error(error);
-          } else {
-            var timeline = trimTweets(data);
-            db.storeUser({
-              id: passportSession.id,
-              name: passportSession.name,
-              screenName: passportSession.screenName,
-              timeline: timeline
-            }, function (error, user) {
-              timeline.splice(5,50);
-              io.to(socket.id).emit('init', timeline);
-            });
-          }
+      twit.get('statuses/home_timeline', {
+        trim_user: false,
+        count: 50,
+        contributor_details: false,
+        include_entities: false
+      }, function (error, data, response) {
+        if (error) e(error);
+        var timeline = trimTweets(data);
+        db.storeUser({
+          id: passportSession.id,
+          name: passportSession.name,
+          screenName: passportSession.screenName,
+          timeline: timeline
+        }, function (error, user) {
+          timeline.splice(5,195);
+          io.to(socket.id).emit('init', timeline);
+        });
       });
     } catch (error) {
-      e(error);
       io.to(socket.id).emit('redirect index');
     }
   });
@@ -127,10 +121,11 @@ io.on('connection', function(socket){
       io.to(socket.id).emit('supplemental tweet', tweet);
     });
   }).on('unconnect', function () {
-    l(sid + ': unconnected at ' + Date());
+    //l(sid + ': unconnected at ' + Date());
     if (stream) {
-      stream.stol();
+      stream.stop();
     }
+    io.to(socket.id).emit('unconnect', true);
   });
 });
 
@@ -159,7 +154,7 @@ app.get('/home', authenticate, function (request, response) {
 
 app.get('/logout', function (request, response) {
   request.session.destroy(function(error) {
-    response.redirect('/');
+    response.redirect(200, '/');
   });
 });
 
@@ -227,4 +222,4 @@ module.exports.server = server;
 module.exports.db = db;
 module.exports.sessionStore = sessionStore;
 module.exports.trimTweets = trimTweets;
-
+module.exports.ts = ts;

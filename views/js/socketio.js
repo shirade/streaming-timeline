@@ -17,8 +17,7 @@ socket.on('new tweet', function (tweet) {
   $('#timeline').prepend(tweetUL(tweet));
 });
 
-socket.on('delete tweet', function (tweet) {
-  // If there is a tweet on browser which will be deleted, then browser will request a supplemental tweet. 
+socket.on('delete tweet', function (tweet) { 
   if ($('#timeline .tweet[data-uid=' + tweet.id + ']').remove().length == 1) {
     socket.emit('tweet');
   }

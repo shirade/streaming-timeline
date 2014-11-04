@@ -5,7 +5,7 @@ var l = console.log;
 var rootPath = path.join(__dirname + '/..');
 var db;
 
-describe('db.js', function () {
+describe('Test of db.js - original database library', function () {
   before(function (done) {
     db = require(path.join(rootPath + '/lib/db'));
     db.connect('mongodb://localhost/test');
@@ -14,7 +14,7 @@ describe('db.js', function () {
     }, 500);
   });
 
-  it('storeUser - user to be registered is yet in the database', function (done) {
+  it('storeUser - case of the user is not in the database', function (done) {
     var now = Date();
     db.storeUser({
       id: 12345678,
@@ -27,14 +27,14 @@ describe('db.js', function () {
     });
   });
 
-  it('getFifthTweet - User 12345678 has only 1 tweet so this evokes error', function (done) {
+  it('getFifthTweet - User 12345678 has only 1 tweet, this becomes error', function (done) {
     db.getFifthTweet(12345678, function (error, tweet) {
       assert.strictEqual(error, 'no more tweet');
       done();
     });
   });
 
-  it('storeUser - user to be registered is already in the database', function (done) {
+  it('storeUser - case of the user is already in the database', function (done) {
     var now = Date();
     db.storeUser({
       id: 12345678,
@@ -53,7 +53,7 @@ describe('db.js', function () {
     });
   });
 
-  it('pushTweet - TBD', function (done) {
+  it('pushTweet - push new tweet to user\'s timeline', function (done) {
     var now = Date();
     var tweet = {
       id: 12340006,
@@ -66,7 +66,7 @@ describe('db.js', function () {
     });
   });
 
-  it('popTweet - TBD', function (done) {
+  it('popTweet - pop deleted tweet from user\'s timeline', function (done) {
     var tweet = {
       user_id: 12345678,
       id: 12340006
@@ -77,7 +77,7 @@ describe('db.js', function () {
     });
   });
 
-  it('getFifthTweet - TBD', function (done) {
+  it('getFifthTweet - get fifth tweet from user\' timeline', function (done) {
     db.getFifthTweet(12345678, function (error, tweet) {
       assert.strictEqual(error, null);
       done();

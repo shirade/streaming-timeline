@@ -1,6 +1,3 @@
-//var request = require('request');
-//var fs = require('fs');
-//var qs = require('querystring');
 var path = require('path');
 var assert = require('assert');
 
@@ -8,7 +5,7 @@ var l = console.log;
 var rootPath = path.join(__dirname + '/..');
 var helper;
 
-describe('socketio.js', function () {
+describe('Test of helper.js - client side javascript', function () {
   before(function (done) {
     helper = require(path.join(rootPath + '/views/js/helper'));
     done();
@@ -25,9 +22,5 @@ describe('socketio.js', function () {
     var result = helper.tweetUL({ id: 1234, text:'test', user: {name: 'test user'}, created_at: now});
     assert.strictEqual(result, expected);
     done();
-  });
-
-  after(function (done) {
-    done()
   });
 });

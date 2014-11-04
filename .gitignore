@@ -1,6 +1,8 @@
 data/
 var/
 
+package.json
+
 # Logs
 logs
 *.log
