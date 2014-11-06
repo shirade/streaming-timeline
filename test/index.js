@@ -168,7 +168,7 @@ describe('Test of index.js - server', function () {
     });
 
     it('/oauth/twitter/auth, should return statusCode 200 and twitter auth page', function (done) {
-      this.timeout(4 * 1000);
+      this.timeout(10 * 1000);
       request.get('http://localhost:3000/oauth/twitter/auth', function (error, response, body) {
         if (error) e(error);
         assert.strictEqual(response.statusCode, 200);
@@ -192,7 +192,8 @@ describe('Test of index.js - server', function () {
       request.get('http://localhost:3000/logout', function (error, response, body) {
         if (error) e(error);
         assert.strictEqual(response.statusCode, 200);
-        assert.strictEqual(body, 'OK. Redirecting to /');
+        var html = fs.readFileSync(path.join(rootPath + '/test/html/index.html'));
+        assert.strictEqual(body, html.toString());
         done();
       });
     });

@@ -154,7 +154,7 @@ app.get('/home', authenticate, function (request, response) {
 
 app.get('/logout', function (request, response) {
   request.session.destroy(function(error) {
-    response.redirect(200, '/');
+    response.redirect(302, '/');
   });
 });
 
