@@ -5,6 +5,18 @@ var l = console.log;
 var rootPath = path.join(__dirname + '/..');
 var helper;
 
+function createTweetUL (tweet) {
+  var ul = '<ul class="tweet" data-uid=' + tweet.id + '>';
+  ul += '<div class="image_frame">';
+  ul += '<div class="image"><img src="' + tweet.user.profile_image_url + '" alt="' + tweet.user.screen_name + '" style="border-radius: 7px;"></div>';
+  ul += '</div>';
+  ul += '<div class="user">' + tweet.user.name + ' @' + tweet.user.screen_name + '</div>';  
+  ul += '<div class="text">' + tweet.text + '</div>';
+  //ul += '<div class="delete"><a href="delete">delete(do not push)</a></div>';
+  ul += '</ul>';
+  return ul;
+};
+
 describe('Test of helper.js - client side javascript', function () {
   before(function (done) {
     helper = require(path.join(rootPath + '/views/js/helper'));
@@ -12,15 +24,10 @@ describe('Test of helper.js - client side javascript', function () {
   });
 
   it('function - tweetUL returns <li> element', function (done) {
-    /*
-      For example,
-      <li class="tweet" data-uid="1234">test<div class="footer"> - test user posted at Thu Oct 30 2014 12:13:11 GMT+0900 (JST)</div></li>
-      is expected.
-    */
+    var tweet = { id: 1234, text:'test', user: {name: 'test user', screen_name: 'test', profile_image_url: 'dummy'}};
     var now = Date();
-    var expected = '<li class="tweet" data-uid="1234">test<div class="footer"> - test user posted at ' + now + '</div></li>'
-    var result = helper.tweetUL({ id: 1234, text:'test', user: {name: 'test user'}, created_at: now});
-    assert.strictEqual(result, expected);
+    var result = helper.tweetUL(tweet);
+    assert.strictEqual(result, createTweetUL(tweet));
     done();
   });
 });

@@ -103,7 +103,8 @@ describe('Test of index.js - server', function () {
         user: {
           id: 1,
           name: '1',
-          screen_name: '1'
+          screen_name: '1',
+          profile_image_url: 'dummyURL'
         }
       },{
         created_at: now,
@@ -112,7 +113,8 @@ describe('Test of index.js - server', function () {
         user: {
           id: 2,
           name: '2',
-          screen_name: '2'
+          screen_name: '2',
+          profile_image_url: 'dummyURL'
         }
       },{
         created_at: now,
@@ -121,7 +123,8 @@ describe('Test of index.js - server', function () {
         user: {
           id: 3,
           name: '3',
-          screen_name: '3'
+          screen_name: '3',
+          profile_image_url: 'dummyURL'
         }
       }
       ];

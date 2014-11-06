@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><title>Your Twitter Streaming Timeline</title><link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css"/><link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css"/><link rel="stylesheet" href="css/cover.css"/><script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.0/jquery.min.js"></script><script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script><script src="/socket.io/socket.io.js"></script></head><body><div class="site-wrapper"><div class="site-wrapper-inner"><div class="cover-container"><div class="masthead clearfix"><div class="inner"><h3 class="masthead-brand">Timeline Streaming</h3><ul class="nav masthead-nav"><li><a href="/logout">Logout</a></li></ul></div></div><script> (function () {
+<!DOCTYPE html><html lang="en"><head><title>Your Twitter Streaming Timeline</title><link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css"/><link rel="stylesheet" href="css/cover.css"/><script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.0/jquery.min.js"></script><script src="/socket.io/socket.io.js"></script></head><body><div class="site-wrapper"><div class="site-wrapper-inner"><div class="cover-container"><div class="masthead clearfix"><div class="inner"><h3 class="masthead-brand">Timeline Streaming</h3><ul class="nav masthead-nav"><li><a href="/logout">Logout</a></li></ul></div></div><script> (function () {
    var socket = io();
 
   socket.on('init', function (tweets) {
@@ -36,6 +36,15 @@
   };
  })();
   function tweetUL (tweet) {
-  return '<li class="tweet" data-uid="' + tweet.id + '">' +  tweet.text + '<div class="footer"> - ' + tweet.user.name + ' posted at ' + (new Date(tweet.created_at)).toLocaleString("ja-JP") +'</div></li>';
+  var ul = '';
+  ul += '<ul class="tweet" data-uid=' + tweet.id + '>';
+  ul += '<div class="image_frame">';
+  ul += '<div class="image"><img src="' + tweet.user.profile_image_url + '" alt="' + tweet.user.screen_name + '" style="border-radius: 7px;"></div>';
+  ul += '</div>';
+  ul += '<div class="user">' + tweet.user.name + ' @' + tweet.user.screen_name + '</div>';  
+  ul += '<div class="text">' + tweet.text + '</div>';
+  //ul += '<div class="delete"><a href="delete">delete(do not push)</a></div>';
+  ul += '</ul>';
+  return ul;
 }
 module.exports.tweetUL = tweetUL;</script><div class="inner cover"><ul id="timeline"></ul></div><div class="mastfoot"><div class="inner"><p>Copyright &copy; 2014 ○○○○○○○○○ All Rights Reserved.</p></div></div></div></div></div></body></html>

@@ -108,7 +108,7 @@ io.on('connection', function(socket){
           screenName: passportSession.screenName,
           timeline: timeline
         }, function (error, user) {
-          timeline.splice(5,195);
+          timeline.splice(5, 195);
           io.to(socket.id).emit('init', timeline);
         });
       });
@@ -180,16 +180,6 @@ app.all('/*', function (request, response) {
   response.sendStatus(400);
 });
 
-/**
-  Start server 
-**/
-if (require.main === module) {
-  server.listen(3000, function () {
-    l('Listening at http://localhost:3000/');
-    db.connect('mongodb://localhost/twitter');
-  });
-};
-
 // supplemental function
 
 function trimTweets (timeline) {
@@ -208,7 +198,8 @@ function trimTweet (tweet) {
     user: {
       id: tweet.user.id,
       name: tweet.user.name,
-      screen_name: tweet.user.screen_name
+      screen_name: tweet.user.screen_name,
+      profile_image_url: tweet.user.profile_image_url
     }
   };
 };
@@ -216,6 +207,16 @@ function trimTweet (tweet) {
 function getSID (socket) {
   var obj = qs.parse(socket.handshake.headers.cookie.replace(' ', ''), ';', '=');
   return obj['connect.sid'].split('.')[0].slice(2);
+};
+
+/**
+  Start server 
+**/
+if (require.main === module) {
+  server.listen(3000, function () {
+    l('Listening at http://localhost:3000/');
+    db.connect('mongodb://localhost/twitter');
+  });
 };
 
 module.exports.server = server;
