@@ -1,5 +1,4 @@
-data/
-var/
+mongo/
 
 # Logs
 logs

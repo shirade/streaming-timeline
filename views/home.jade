@@ -3,9 +3,10 @@ html(lang='en')
   head
     title= 'Your Twitter Streaming Timeline'
     link(rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css')
-    link(rel='stylesheet' href='css/cover.css')
+    link(rel='stylesheet' href='css/twitter.css')
     script(src='//ajax.googleapis.com/ajax/libs/jquery/2.0.0/jquery.min.js')
     script(src='/socket.io/socket.io.js')
+    script(src='js/twitter.js')
   body
     .site-wrapper
       .site-wrapper-inner
@@ -16,12 +17,9 @@ html(lang='en')
               ul.nav.masthead-nav
                 li
                   a(href='/logout') Logout
-          script
-            include js/socketio.js
-            include js/helper.js
           .inner.cover
             ul#timeline
 
           .mastfoot
             .inner
-              p Copyright &copy; 2014 ○○○○○○○○○ All Rights Reserved.
+              p &copy; 2014 Satoshi Hirade

@@ -8,6 +8,7 @@
   margin-bottom: 5px;
   border-radius: 10px;
   font-size: 12px;
+  list-style-type: none;
 }
 .tweet .image_frame {
   width: 54px;
@@ -19,6 +20,7 @@
 
 .tweet .image_frame .image {
   padding: 3px;
+  border-radius: 10px;
 }
 
 .tweet .user {
