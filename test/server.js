@@ -47,7 +47,7 @@ var oauth = {
 var user = {
   id: env.id,
   name: 'test user',
-  screenName: 'test user',
+  screen_name: 'test user',
   token: env.token,
   tokenSecret: env.token_secret
 };
@@ -132,7 +132,7 @@ describe('Test of server.js - server', function () {
         assert.strictEqual(arg1, null);
         assert.strictEqual(arg2.id, profile.id);
         assert.strictEqual(arg2.name, profile.displayName);
-        assert.strictEqual(arg2.screenName, profile.username);
+        assert.strictEqual(arg2.screen_name, profile.username);
         assert.strictEqual(arg2.token, profile.token);
         assert.strictEqual(arg2.tokenSecret, profile.tokenSecret);
         done();
@@ -284,7 +284,7 @@ describe('Test of server.js - server', function () {
             request.get({url:url, oauth:oauth, json:true}, function (error, response, body) {
               // expextedTweets to be used later to confirm expected tweet is fetch from server
               if (error) console.error(error);
-              expectedTweets = body.map(server.trimTweet);
+              expectedTweets = Array.isArray(body) ? body.map(server.trimTweet) : [];
               done();
             });
           });
@@ -336,7 +336,7 @@ describe('Test of server.js - server', function () {
       });
     });
 
-    it('socket.disconnect() should return true', function (done) {
+    it('socket.disconnect() should execute disconnect event of server side', function (done) {
       socket.disconnect();
       done();
     });

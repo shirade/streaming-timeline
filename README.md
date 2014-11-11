@@ -37,8 +37,6 @@ $ npm test
 ####Server side
 * **supplemental tweet**  
 Client side sends 'supplemental tweet' event when the number of tweet on your timeline is less than 5 for deletion.
-* **disconnect**  
-Client side sends 'disconnect' event when you leave your timeline page.
 
 ####Client side
 * **init**  

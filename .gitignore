@@ -1,5 +1,3 @@
-mongo/
-
 # Logs
 logs
 *.log
@@ -28,3 +26,5 @@ node_modules
 
 # Users Environment Variables
 .lock-wscript
+mongo/
+*.rdb

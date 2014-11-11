@@ -10,7 +10,7 @@
   });
 
   socket.on('new tweet', function (tweet) {
-    $('#timeline .tweet:last').remove();
+    if ($('#timeline .tweet').length > 4) $('#timeline .tweet:last').remove();
     $('#timeline').prepend(createTweetLi(tweet));
   });
 
