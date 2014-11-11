@@ -2,7 +2,6 @@
   General modules here
   request - To use the same cookie in the other request, set option {jar: true}
 ***/
-
 var request = require('request').defaults({jar: true});
 var fs = require('fs');
 var qs = require('querystring');
@@ -11,6 +10,7 @@ var assert = require('assert');
 var async = require('async');
 var http = require('http');
 var debug = require('debug')('test.server');
+var exec = require('child_process').exec;
 
 /***
   Shortcuts command and global variables which are necessary to do test
@@ -146,9 +146,19 @@ describe('Test of server.js - server', function () {
       request.get('http://localhost:3000/', function (error, response, body) {
         if (error) console.error(error);
         assert.strictEqual(response.statusCode, 200);
-        var html = fs.readFileSync(path.join(rootPath, 'test', 'html', 'index.html'));
-        assert.equal(body, html.toString());
-        done();
+        var command = path.join(__dirname, '..', 'node_modules', '.bin', 'jade')
+        + ' ' + path.join(__dirname, '..', 'views', 'index.jade')
+        + ' -o ' + path.join(__dirname, '..', 'test', 'html');
+        exec(command,
+          function (error, stdout, stderr) {
+            if (error !== null) {
+              console.log('exec error: ' + error);
+            } else {
+              var html = fs.readFileSync(path.join(rootPath, 'test', 'html', 'index.html'));
+              assert.equal(body, html.toString());
+              done();
+            }
+        });
       });
     });
 
@@ -177,9 +187,19 @@ describe('Test of server.js - server', function () {
       request.get({url: 'http://localhost:3000/home'}, function (error, response, body) {
         if(error) console.error(error);
         assert.strictEqual(response.statusCode, 200);
-        var html = fs.readFileSync(path.join(rootPath, 'test', 'html', 'home.html'));
-        assert.equal(body, html.toString());
-        done();
+        var command = path.join(__dirname, '..', 'node_modules', '.bin', 'jade')
+        + ' ' + path.join(__dirname, '..', 'views', 'home.jade')
+        + ' -o ' + path.join(__dirname, '..', 'test', 'html');
+        exec(command,
+          function (error, stdout, stderr) {
+            if (error !== null) {
+              console.log('exec error: ' + error);
+            } else {
+              var html = fs.readFileSync(path.join(rootPath, 'test', 'html', 'home.html'));
+              assert.equal(body, html.toString());
+              done();
+            }
+        });
       });
     });
 
@@ -275,8 +295,6 @@ describe('Test of server.js - server', function () {
     it('socket.on("init") should return recent 5 tweets', function (done) {
       this.timeout(5 * 1000);
       socket.on('init', function (tweets) {
-        //debug(tweets);
-        //debug(expectedTweets);
         assert.deepEqual(tweets, expectedTweets);
         done();
       });
@@ -318,13 +336,10 @@ describe('Test of server.js - server', function () {
       });
     });
 
-    // it('socket.on("disconnect") should return true', function (done) {
-    //   socket.emit('disconnect');
-    //   socket.on('disconnect', function (msg) {
-    //     assert.strictEqual(msg, true);
-    //     done();
-    //   });
-    // });
+    it('socket.disconnect() should return true', function (done) {
+      socket.disconnect();
+      done();
+    });
   });
 
   after(function (done) {

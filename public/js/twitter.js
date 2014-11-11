@@ -24,10 +24,6 @@
     $('#timeline').append(createTweetLi(tweet));
   });
 
-  window.onunload = function () {
-    socket.emit('disconnect');
-  };
-
   function createTweetLi (tweet) {
     return '<li class="tweet" id=' + tweet.id + '>' 
       + '<div class="image_frame">'
