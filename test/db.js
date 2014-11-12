@@ -3,7 +3,6 @@ var assert = require('assert');
 var debug = require('debug')('test.db');
 
 var rootPath = path.join(__dirname, '..');
-var db, now = Date();
 
 var testUser = {
   id: 12345678,
@@ -23,11 +22,17 @@ function createTestUserWithTimeline (timeline) {
     name: testUser.name,
     screen_name: testUser.screen_name,
     timeline: timeline,
-    profile_image_url: 'http://dummy.profile.image.url'
+    profile_image_url: 'http://dummy-profile-image.example.com'
   };
 };
 
+function arrayDeepEqual (arg1, arg2) {
+  // 
+};
+
 describe('Test of db.js - original database library', function () {
+  var db;
+  var now = Date();
   describe('Normal cases', function () {
     before(function (done) {
       db = require(path.join(rootPath, 'lib', 'db'));
@@ -38,7 +43,8 @@ describe('Test of db.js - original database library', function () {
       var timeline = [{id:12340000, text:'text 0', created_at: now, user: createTestUserWithTimeline([])}];
       db.findOneUserAndUpdate(createTestUserWithTimeline(timeline), function (error, user) {
         verifyUser(user);
-        assert.notDeepEqual(user.timeline, timeline);
+        // assert.deepEqual()
+        assert.deepEqual(user.timeline[0], timeline[0]);
         done();
       });
     });
@@ -62,7 +68,8 @@ describe('Test of db.js - original database library', function () {
       ];
       db.findOneUserAndUpdate(createTestUserWithTimeline(timeline), function (error, user) {
         verifyUser(user);
-        assert.notDeepEqual(user.timeline, timeline);
+        // 
+        // assert.notDeepEqual(user.timeline, timeline);
         done();
       });
     });

@@ -14,8 +14,8 @@ You need to export environment variables to start twitter client and run test co
 
 For twitter client, you need to export the followings.
 ```bash
-$ export TWITTER_CLIENT_DOMAIN='your_domain' # default:localhost
-$ export TWITTER_CLIENT_PORT='your_port' # default:3000
+$ export HOST_NAME='your_host_name' # default:localhost
+$ export PORT='your_port' # default:3000
 $ export TWITTER_CONSUMER_KEY='your_app_consumer_key'
 $ export TWITTER_CONSUMER_SECRET='your_app_consumer_secret'
 ```
@@ -34,6 +34,7 @@ $ npm test
 ```
 
 ##socket.io events
+###要編集
 ####Server side
 * **supplemental tweet**  
 Client side sends 'supplemental tweet' event when the number of tweet on your timeline is less than 5 for deletion.

@@ -1,7 +1,7 @@
 (function () {
   var socket = io();
 
-  socket.on('init', function (tweets) {
+  socket.on('tweets', function (tweets) {
     var timeline = $('#timeline');
     for (var i = 0; i < tweets.length; i++) {
       var tweet = tweets[i];
