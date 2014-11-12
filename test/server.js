@@ -77,7 +77,7 @@ function setSession (response, callback) {
 describe('Test of server.js - server', function () {
   before(function (done) {
     server = require(path.join(rootPath, 'lib', 'server'));
-    server.deamon.listen(3000);
+    server.httpd.listen(3000);
     done();
   });
 
