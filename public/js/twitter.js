@@ -1,22 +1,24 @@
 (function () {
   var socket = io();
 
-  socket.on('tweets', function (tweets) {
+  socket.on('tweet(s)', function (msg) {
     var timeline = $('#timeline');
-    for (var i = 0; i < tweets.length; i++) {
-      var tweet = tweets[i];
-      timeline.append(createTweetLi(tweet));
-    };
-  });
-
-  socket.on('new tweet', function (tweet) {
-    if ($('#timeline .tweet').length > 4) $('#timeline .tweet:last').remove();
-    $('#timeline').prepend(createTweetLi(tweet));
-  });
-
-  socket.on('delete tweet', function (tweet) { 
-    if ($('#timeline .tweet[id=' + tweet.id + ']').remove().length == 1) {
+    if (msg.length === 1) {
+      timeline.prepend(createTweetLi(msg[0]));
+      var tweet = $('.tweet');
+      tweet.eq(0).show();
+      tweet.eq(4).hide();
+    } else {
+      msg.map(function (tweet, index) {
+        timeline.append(createTweetLi(tweet));
+        if (index < 5) $('.tweet').eq(index).show();
+      });
     }
+  });
+
+  socket.on('delete', function (tweet) { 
+    $('#' + tweet.id).remove();
+    $('.tweet:eq(4)').show();
   });
 
   function createTweetLi (tweet) {

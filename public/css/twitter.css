@@ -9,6 +9,7 @@
   border-radius: 10px;
   font-size: 12px;
   list-style-type: none;
+  display: none;
 }
 .tweet .image_frame {
   width: 54px;
