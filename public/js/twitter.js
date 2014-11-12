@@ -16,12 +16,7 @@
 
   socket.on('delete tweet', function (tweet) { 
     if ($('#timeline .tweet[id=' + tweet.id + ']').remove().length == 1) {
-      socket.emit('supplemental tweet');
     }
-  });
-
-  socket.on('supplemental tweet', function (tweet) {
-    $('#timeline').append(createTweetLi(tweet));
   });
 
   function createTweetLi (tweet) {
