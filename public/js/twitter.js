@@ -1,6 +1,5 @@
 (function () {
   var socket = io();
-
   socket.on('tweet(s)', function (msg) {
     var timeline = $('#timeline');
     if (msg.length === 1) {
@@ -14,13 +13,11 @@
         if (index < 5) $('.tweet').eq(index).show();
       });
     }
-  });
-
-  socket.on('delete', function (tweet) { 
+  }).on('delete', function (tweet) { 
     $('#' + tweet.id).remove();
     $('.tweet:eq(4)').show();
   });
-
+  
   function createTweetLi (tweet) {
     return '<li class="tweet" id=' + tweet.id + '>' 
       + '<div class="image_frame">'
@@ -30,7 +27,5 @@
       + '<div class="text">' + tweet.text + '</div>'
       + '</li>';
   };
-
-  module.exports.createTweetLi = createTweetLi;
  })();
   
