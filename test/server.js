@@ -14,14 +14,11 @@ var exec = child_process.exec;
 var cookie = require('cookie');
 var cookieParser = require('cookie-parser');
 
-/***
-  Shortcuts command and global variables which are necessary to do test
-***/
 var rootPath = path.join(__dirname, '..');
 var server = require(path.join(rootPath, 'lib', 'server'));
 
 /***
-  For using Twitter RESTful API by 'request' module
+  For Twitter RESTful API by 'request' module
 ***/
 var oauth = {
   consumer_key: process.env['TWITTER_CONSUMER_KEY'],
@@ -47,7 +44,7 @@ var user = {
 function setSession (response, callback) {
   var sid = cookieParser.signedCookie(
     cookie.parse(response.request.headers.cookie)['connect.sid'], 
-    'secret'
+    process.env['COOKIE_SECRET'] || 'secret'
   );
   server.redisStore.set(sid, {cookie: {expires: null}, passport: {user: user}}, callback);
 };
@@ -64,7 +61,7 @@ function jade (filename, callback) {
 ***/
 describe('server.js', function () {
   before(function (done) {
-    server.httpd.listen(3000);
+    server.redisStore.client.flushdb();
     done();
   });
 
@@ -126,11 +123,6 @@ describe('server.js', function () {
         done();
       });
     });
-
-    after(function (done) {
-      server.redisStore.client.flushdb();
-      done();
-    });
   });
   
   describe('logout', function () {
@@ -153,6 +145,7 @@ describe('server.js', function () {
       });
     });
   });
+
 
   function verifyAbnormalResponse (response, body, expected) {
     assert.strictEqual(response.statusCode, expected['status-code']);
@@ -194,13 +187,13 @@ describe('server.js', function () {
       });
     });
   });
-/*
+
   describe('socketio test', function () {
     var socket, myAgent, expected;
     before(function (done) {
       this.timeout(5 * 1000);
-      var url = 'https://api.twitter.com/1.1/statuses/home_timeline.json?count=20';
-      request.get({url:url, oauth:oauth, json:true}, function (error, response, body) {
+      require(path.join(rootPath, 'test', 'mock.js'));
+      request.get({url:'http://localhost:50000/home_timeline.json', json:true}, function (error, response, body) {
         expected = body;
         request('http://localhost:3000/', function (error, response, body) {
           setSession(response, function (error) {
@@ -218,36 +211,42 @@ describe('server.js', function () {
       });
     });
 
-    var newTweetFlag;
     it('tweet(s) event', function (done) {
       this.timeout(5 * 1000);
-      newTweetFlag = false;
       client = require('socket.io-client');
       socket = client.connect('http://localhost:3000', { agent: myAgent});
       socket.on('tweet(s)', function (tweets){
-        if (newTweetFlag === false) {
-          assert.deepEqual(tweets, expected);
-          done();
-        }
+        assert.deepEqual(tweets, expected);
+        done();
       });
     });
 
     var delInfo;
-    it('socket.on("tweet(s)") should get new tweet and socket.on("delete") should get delete info', function (done) {
+    it('socket.on("tweet(s)") should get new tweet info', function (done) {
       this.timeout(10 * 1000);
-      newTweetFlag = true;
+      var text = 'This is a test tweet';
+      socket.removeListener('tweet(s)');
+      socket.on('tweet(s)', function (tweet){
+        assert.strictEqual(tweet[0].text, delInfo.text);
+        done();
+      });
+      var url = 'https://api.twitter.com/1.1/statuses/update.json?';
+      url += qs.stringify({status: text});
+      request.post({url:url, oauth:oauth, json:true}, function (error, response, body) {
+        delInfo = body;
+      });
+    });
+
+    it('socket.on("delete") should get delete info', function (done) {
+      this.timeout(10 * 1000);
       socket.on('delete', function (tweet){
         assert.strictEqual(tweet.user_id, delInfo.user.id);
         assert.strictEqual(tweet.id, delInfo.id);
         done();
       });
-      var url = 'https://api.twitter.com/1.1/statuses/update.json?';
-      url += qs.stringify({status: 'This tweet will be deleted'});
+      url = 'https://api.twitter.com/1.1/statuses/destroy/' + delInfo.id_str + '.json';
       request.post({url:url, oauth:oauth, json:true}, function (error, response, body) {
-        url = 'https://api.twitter.com/1.1/statuses/destroy/' + body.id_str + '.json';
-        request.post({url:url, oauth:oauth, json:true}, function (error, response, body) {
-          delInfo = body;
-        });
+        delInfo = body;
       });
     });
 
@@ -257,7 +256,7 @@ describe('server.js', function () {
       done();
     });
   });
-*/
+
   after(function (done) {
     server.redisStore.client.flushdb();
     process.exit();

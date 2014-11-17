@@ -6,7 +6,7 @@
       timeline.prepend(createTweetLi(msg[0]));
       var tweet = $('.tweet');
       tweet.eq(0).show();
-      tweet.eq(4).hide();
+      tweet.eq(5).hide();
     } else {
       msg.map(function (tweet, index) {
         timeline.append(createTweetLi(tweet));
