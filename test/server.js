@@ -21,36 +21,24 @@ var rootPath = path.join(__dirname, '..');
 var server = require(path.join(rootPath, 'lib', 'server'));
 
 /***
-  obj which include enviromental variables
+  For using Twitter RESTful API by 'request' module
 ***/
-var env = {
-  id: process.env['TWITTER_USER_ID'],
+var oauth = {
   consumer_key: process.env['TWITTER_CONSUMER_KEY'],
   consumer_secret: process.env['TWITTER_CONSUMER_SECRET'],
   token: process.env['TWITTER_TOKEN_KEY'],
   token_secret: process.env['TWITTER_TOKEN_SECRET']
-}
-
-/***
-  For using Twitter RESTful API by 'request' module
-***/
-var oauth = {
-  id: env.id,
-  consumer_key: env.consumer_key,
-  consumer_secret: env.consumer_secret,
-  token: env.token,
-  token_secret: env.token_secret
 };
 
 /***
   Test user data which will be stored into session store
 ***/
 var user = {
-  id: env.id,
+  id: process.env['TWITTER_USER_ID'],
   name: 'test user',
   screen_name: 'test user',
-  token: env.token,
-  tokenSecret: env.token_secret
+  token: process.env['TWITTER_TOKEN_KEY'],
+  tokenSecret: process.env['TWITTER_TOKEN_SECRET']
 };
 
 /***
@@ -84,7 +72,6 @@ describe('server.js', function () {
     it('/ - should return index.jade', function (done) {
       request.get('http://localhost:3000/', function (error, response, body) {
         jade('index', function (error, stdout, stderr) {
-          debug(error, stdout, stderr);
           assert.strictEqual(response.statusCode, 200);
           var html = fs.readFileSync(path.join(rootPath, 'test', 'html', 'index.html'));
           assert.equal(body, html.toString());
@@ -95,7 +82,6 @@ describe('server.js', function () {
 
     it('/css/twitter.css - should return twitter.css', function (done) {
       request.get('http://localhost:3000/css/twitter.css', function (error, response, body) {
-        debug(error);
         assert.strictEqual(response.statusCode, 200);
         var css = fs.readFileSync(path.join(rootPath, 'public', 'css', 'twitter.css'));
         assert.strictEqual(body, css.toString());
@@ -125,7 +111,6 @@ describe('server.js', function () {
 
     it('/css/twitter.css - should return twitter.css', function (done) {
       request.get('http://localhost:3000/css/twitter.css', function (error, response, body) {
-        debug(error);
         assert.strictEqual(response.statusCode, 200);
         var css = fs.readFileSync(path.join(rootPath, 'public', 'css', 'twitter.css'));
         assert.strictEqual(body, css.toString());
@@ -135,7 +120,6 @@ describe('server.js', function () {
 
     it('/js/twitter.js - should return twitter.js', function (done) {
       request.get('http://localhost:3000/js/twitter.js', function (error, response, body) {
-        debug(error);
         assert.strictEqual(response.statusCode, 200);
         var js = fs.readFileSync(path.join(rootPath, 'public', 'js', 'twitter.js'));
         assert.strictEqual(body, js.toString());
@@ -161,7 +145,6 @@ describe('server.js', function () {
     it('/logout - should return index.jade', function (done) {
       request.get('http://localhost:3000/logout', function (error, response, body) {
         jade('index', function (error, stdout, stderr) {
-          debug(error, stdout, stderr);
           assert.strictEqual(response.statusCode, 200);
           var html = fs.readFileSync(path.join(rootPath, 'test', 'html', 'index.html'));
           assert.equal(body, html.toString());
@@ -171,13 +154,18 @@ describe('server.js', function () {
     });
   });
 
+  function verifyAbnormalResponse (response, body, expected) {
+    assert.strictEqual(response.statusCode, expected['status-code']);
+    var regexp = new RegExp(expected['content-type']);
+    assert(regexp.exec(response.headers['content-type']));
+    assert.strictEqual(body, expected['body']);
+  }
 
   describe('abnormal cases', function () {
     it('/get, should returns 404 not found', function (done) {
       request.get('http://localhost:3000/get', function (error, response, body) {
         if (error) console.error(error);
-        assert.strictEqual(response.statusCode, 404);
-        assert.strictEqual(body, 'Not Found');
+        verifyAbnormalResponse(response, body, {'status-code': 404, 'content-type': 'text/plain', 'body': 'Not Found'});
         done();
       });
     });
@@ -185,8 +173,7 @@ describe('server.js', function () {
     it('/post, should returns 400 bad request', function (done) {
       request.post('http://localhost:3000/post', function (error, response, body) {
         if (error) console.error(error);
-        assert.strictEqual(response.statusCode, 405);
-        assert.strictEqual(body, 'Method Not Allowed');
+        verifyAbnormalResponse(response, body, {'status-code': 405, 'content-type': 'text/plain', 'body': 'Method Not Allowed'});
         done();
       });
     });
@@ -194,8 +181,7 @@ describe('server.js', function () {
     it('/put, should returns 400 bad request', function (done) {
       request.put('http://localhost:3000/put', function (error, response, body) {
         if (error) console.error(error);   
-        assert.strictEqual(response.statusCode, 405);
-        assert.strictEqual(body, 'Method Not Allowed');
+        verifyAbnormalResponse(response, body, {'status-code': 405, 'content-type': 'text/plain', 'body': 'Method Not Allowed'});
         done();
       });
     });
@@ -203,21 +189,19 @@ describe('server.js', function () {
     it('/delete, should returns 400 bad request', function (done) {
       request.del('http://localhost:3000/delete', function (error, response, body) {
         if (error) console.error(error);
-        assert.strictEqual(response.statusCode, 405);
-        assert.strictEqual(body, 'Method Not Allowed');
+        verifyAbnormalResponse(response, body, {'status-code': 405, 'content-type': 'text/plain', 'body': 'Method Not Allowed'});
         done();
       });
     });
   });
-
+/*
   describe('socketio test', function () {
-    var socket, myAgent, expectedTweets;
-    // 説明できるように勉強する．
+    var socket, myAgent, expected;
     before(function (done) {
       this.timeout(5 * 1000);
       var url = 'https://api.twitter.com/1.1/statuses/home_timeline.json?count=20';
       request.get({url:url, oauth:oauth, json:true}, function (error, response, body) {
-        expectedTweets = body;
+        expected = body;
         request('http://localhost:3000/', function (error, response, body) {
           setSession(response, function (error) {
             myAgent = new http.Agent();
@@ -225,7 +209,7 @@ describe('server.js', function () {
             myAgent.addRequest = function(req, host, port, localAddress) {
               var old = req._headers.cookie;
               req._headers.cookie = response.request.headers.cookie + (old ? '; ' + old : '');
-              req._headerNames['cookie'] = 'Cookie';
+              req._headerNames['cookie'] = 'Cookie'; // なぜ必要なのか？あとでヘッダーに付加されるためには必要なのか？
               return myAgent._addRequest(req, host, port, localAddress);
             };
             done();
@@ -234,39 +218,46 @@ describe('server.js', function () {
       });
     });
 
-    it('socket.on("tweet(s)") should get tweets info', function (done) {
+    var newTweetFlag;
+    it('tweet(s) event', function (done) {
       this.timeout(5 * 1000);
+      newTweetFlag = false;
       client = require('socket.io-client');
       socket = client.connect('http://localhost:3000', { agent: myAgent});
-      socket.on('connect', function () {
-        debug('socket connect');
-      }).on('tweet(s)', function (tweets){
-        assert.deepEqual(tweets, expectedTweets);
-        done();
+      socket.on('tweet(s)', function (tweets){
+        if (newTweetFlag === false) {
+          assert.deepEqual(tweets, expected);
+          done();
+        }
       });
     });
-/*
-    it('socket.on("delete") should get delete info', function (done) {
+
+    var delInfo;
+    it('socket.on("tweet(s)") should get new tweet and socket.on("delete") should get delete info', function (done) {
       this.timeout(10 * 1000);
+      newTweetFlag = true;
       socket.on('delete', function (tweet){
-        console.log('6');
-        //assert.equal(tweet.user_id, user.id);
+        assert.strictEqual(tweet.user_id, delInfo.user.id);
+        assert.strictEqual(tweet.id, delInfo.id);
         done();
       });
       var url = 'https://api.twitter.com/1.1/statuses/update.json?';
-      url += qs.stringify({status: 'This tweet will be deleted', trim_user: true});
+      url += qs.stringify({status: 'This tweet will be deleted'});
       request.post({url:url, oauth:oauth, json:true}, function (error, response, body) {
-        url = 'https://api.twitter.com/1.1/statuses/destroy/' + body.id + '.json';
+        url = 'https://api.twitter.com/1.1/statuses/destroy/' + body.id_str + '.json';
         request.post({url:url, oauth:oauth, json:true}, function (error, response, body) {
-          console.error(error);
-          console.log(response);
-          console.log(body);
+          delInfo = body;
         });
       });
     });
-*/
-  });
 
+    it('disconnect event', function (done) {
+      this.timeout(5 * 1000);
+      socket.disconnect();
+      done();
+    });
+  });
+*/
   after(function (done) {
     server.redisStore.client.flushdb();
     process.exit();
