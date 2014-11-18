@@ -9,13 +9,14 @@ var path = require('path');
 var assert = require('assert');
 var http = require('http');
 var debug = require('debug')('test::server');
-var child_process = require('child_process');
-var exec = child_process.exec;
+var jade = require('jade');
+var exec = require('child_process').exec;
 var cookie = require('cookie');
 var cookieParser = require('cookie-parser');
 
 var rootPath = path.join(__dirname, '..');
-var server = require(path.join(rootPath, 'lib', 'server'));
+var server = require(path.join(rootPath, 'lib', 'server.js'));
+var client = require('socket.io-client');
 
 /***
   For Twitter RESTful API by 'request' module
@@ -46,14 +47,7 @@ function setSession (response, callback) {
     cookie.parse(response.request.headers.cookie)['connect.sid'], 
     process.env['COOKIE_SECRET'] || 'secret'
   );
-  server.redisStore.set(sid, {cookie: {expires: null}, passport: {user: user}}, callback);
-};
-
-function jade (filename, callback) {
-  var command = path.join(rootPath, 'node_modules', '.bin', 'jade')
-    + ' ' + path.join(rootPath, 'views', filename + '.jade')
-    + ' -o ' + path.join(rootPath, 'test', 'html');
-  exec(command, callback);
+  server.store.set(sid, {cookie: {expires: null}, passport: {user: user}}, callback);
 };
 
 /***
@@ -61,24 +55,24 @@ function jade (filename, callback) {
 ***/
 describe('server.js', function () {
   before(function (done) {
-    server.redisStore.client.flushdb();
+    server.store.client.flushdb();
     done();
   });
 
   describe('before login', function () {
     it('/ - should return index.jade', function (done) {
+      var html = jade.renderFile(path.join(rootPath, 'views', 'index.jade'), {});
       request.get('http://localhost:3000/', function (error, response, body) {
-        jade('index', function (error, stdout, stderr) {
-          assert.strictEqual(response.statusCode, 200);
-          var html = fs.readFileSync(path.join(rootPath, 'test', 'html', 'index.html'));
-          assert.equal(body, html.toString());
-          done();
-        });
+        if (error) done(error);
+        assert.strictEqual(response.statusCode, 200);
+        assert.equal(body, html);
+        done();
       });
     });
 
     it('/css/twitter.css - should return twitter.css', function (done) {
       request.get('http://localhost:3000/css/twitter.css', function (error, response, body) {
+        if (error) done(error);
         assert.strictEqual(response.statusCode, 200);
         var css = fs.readFileSync(path.join(rootPath, 'public', 'css', 'twitter.css'));
         assert.strictEqual(body, css.toString());
@@ -90,24 +84,27 @@ describe('server.js', function () {
   describe('after login', function () {
     before(function (done) {
       request('http://localhost:3000/', function (error, response, body) {
+        if (error) done(error);
         setSession(response, function (error) {
-          done();
+          if (error) done(error);
+          done(error);
         });
       });
     });
 
     it('/ - should return home.jade', function (done) {
+      var html = jade.renderFile(path.join(rootPath, 'views', 'home.jade'), {});
       request.get('http://localhost:3000/', function (error, response, body) {
-        jade('home', function (error, stdout, stderr) {
-          var html = fs.readFileSync(path.join(rootPath, 'test', 'html', 'home.html'));
-          assert.equal(body, html.toString());
-          done();
-        });
+        if (error) done(error);
+        assert.strictEqual(response.statusCode, 200);
+        assert.equal(body, html);
+        done();
       });
     });
 
     it('/css/twitter.css - should return twitter.css', function (done) {
       request.get('http://localhost:3000/css/twitter.css', function (error, response, body) {
+        if (error) done(error);
         assert.strictEqual(response.statusCode, 200);
         var css = fs.readFileSync(path.join(rootPath, 'public', 'css', 'twitter.css'));
         assert.strictEqual(body, css.toString());
@@ -117,6 +114,7 @@ describe('server.js', function () {
 
     it('/js/twitter.js - should return twitter.js', function (done) {
       request.get('http://localhost:3000/js/twitter.js', function (error, response, body) {
+        if (error) done(error);
         assert.strictEqual(response.statusCode, 200);
         var js = fs.readFileSync(path.join(rootPath, 'public', 'js', 'twitter.js'));
         assert.strictEqual(body, js.toString());
@@ -128,20 +126,21 @@ describe('server.js', function () {
   describe('logout', function () {
     before(function (done) {
       request('http://localhost:3000/', function (error, response, body) {
+        if (error) done(error);
         setSession(response, function (error) {
+          if (error) done(error);
           done();
         });
       });
     });
 
     it('/logout - should return index.jade', function (done) {
-      request.get('http://localhost:3000/logout', function (error, response, body) {
-        jade('index', function (error, stdout, stderr) {
-          assert.strictEqual(response.statusCode, 200);
-          var html = fs.readFileSync(path.join(rootPath, 'test', 'html', 'index.html'));
-          assert.equal(body, html.toString());
-          done();
-        });
+      var html = jade.renderFile(path.join(rootPath, 'views', 'index.jade'), {});
+      request.get({url:'http://localhost:3000/logout', followRedirect :false}, function (error, response, body) {
+        if (error) done(error);
+        assert.strictEqual(response.statusCode, 301);
+        assert.equal(body, 'Moved Permanently. Redirecting to /');
+        done();
       });
     });
   });
@@ -157,7 +156,7 @@ describe('server.js', function () {
   describe('abnormal cases', function () {
     it('/get, should returns 404 not found', function (done) {
       request.get('http://localhost:3000/get', function (error, response, body) {
-        if (error) console.error(error);
+        if (error) done(error);
         verifyAbnormalResponse(response, body, {'status-code': 404, 'content-type': 'text/plain', 'body': 'Not Found'});
         done();
       });
@@ -165,7 +164,7 @@ describe('server.js', function () {
 
     it('/post, should returns 400 bad request', function (done) {
       request.post('http://localhost:3000/post', function (error, response, body) {
-        if (error) console.error(error);
+        if (error) done(error);
         verifyAbnormalResponse(response, body, {'status-code': 405, 'content-type': 'text/plain', 'body': 'Method Not Allowed'});
         done();
       });
@@ -173,7 +172,7 @@ describe('server.js', function () {
 
     it('/put, should returns 400 bad request', function (done) {
       request.put('http://localhost:3000/put', function (error, response, body) {
-        if (error) console.error(error);   
+        if (error) done(error);   
         verifyAbnormalResponse(response, body, {'status-code': 405, 'content-type': 'text/plain', 'body': 'Method Not Allowed'});
         done();
       });
@@ -181,7 +180,7 @@ describe('server.js', function () {
 
     it('/delete, should returns 400 bad request', function (done) {
       request.del('http://localhost:3000/delete', function (error, response, body) {
-        if (error) console.error(error);
+        if (error) done(error);
         verifyAbnormalResponse(response, body, {'status-code': 405, 'content-type': 'text/plain', 'body': 'Method Not Allowed'});
         done();
       });
@@ -196,7 +195,9 @@ describe('server.js', function () {
       request.get({url:'http://localhost:50000/home_timeline.json', json:true}, function (error, response, body) {
         expected = body;
         request('http://localhost:3000/', function (error, response, body) {
+          if (error) done(error);
           setSession(response, function (error) {
+            if (error) done(error);
             myAgent = new http.Agent();
             myAgent._addRequest = myAgent.addRequest;
             myAgent.addRequest = function(req, host, port, localAddress) {
@@ -212,8 +213,6 @@ describe('server.js', function () {
     });
 
     it('tweet(s) event', function (done) {
-      this.timeout(5 * 1000);
-      client = require('socket.io-client');
       socket = client.connect('http://localhost:3000', { agent: myAgent});
       socket.on('tweet(s)', function (tweets){
         assert.deepEqual(tweets, expected);
@@ -227,18 +226,21 @@ describe('server.js', function () {
       var text = 'This is a test tweet';
       socket.removeListener('tweet(s)');
       socket.on('tweet(s)', function (tweet){
+        assert(Array.isArray(tweet));
+        assert.strictEqual(tweet.length, 1);
         assert.strictEqual(tweet[0].text, delInfo.text);
         done();
       });
       var url = 'https://api.twitter.com/1.1/statuses/update.json?';
       url += qs.stringify({status: text});
       request.post({url:url, oauth:oauth, json:true}, function (error, response, body) {
+        if (error) done(error);
         delInfo = body;
       });
     });
 
     it('socket.on("delete") should get delete info', function (done) {
-      this.timeout(10 * 1000);
+      this.timeout(5 * 1000);
       socket.on('delete', function (tweet){
         assert.strictEqual(tweet.user_id, delInfo.user.id);
         assert.strictEqual(tweet.id, delInfo.id);
@@ -246,19 +248,22 @@ describe('server.js', function () {
       });
       url = 'https://api.twitter.com/1.1/statuses/destroy/' + delInfo.id_str + '.json';
       request.post({url:url, oauth:oauth, json:true}, function (error, response, body) {
+        if (error) done(error);
         delInfo = body;
       });
     });
 
     it('disconnect event', function (done) {
-      this.timeout(5 * 1000);
       socket.disconnect();
-      done();
+      setTimeout(function() {
+        assert.strictEqual(server.stream.request, undefined);
+        done();
+      }, 100);
     });
   });
 
   after(function (done) {
-    server.redisStore.client.flushdb();
+    server.store.client.flushdb();
     process.exit();
     done();
   });
