@@ -1,6 +1,6 @@
 /***
   General modules here
-  request - To use the same cookie in the other request, set option {jar: true}
+  request - To use the same cookie, set option {jar: true}
 ***/
 var request = require('request').defaults({jar: true});
 var fs = require('fs');
@@ -86,7 +86,6 @@ describe('server.js', function () {
       request('http://localhost:3000/', function (error, response, body) {
         if (error) done(error);
         setSession(response, function (error) {
-          if (error) done(error);
           done(error);
         });
       });
@@ -222,7 +221,7 @@ describe('server.js', function () {
 
     var delInfo;
     it('socket.on("tweet(s)") should get new tweet info', function (done) {
-      this.timeout(10 * 1000);
+      this.timeout(5 * 1000);
       var text = 'This is a test tweet';
       socket.removeListener('tweet(s)');
       socket.on('tweet(s)', function (tweet){
@@ -264,7 +263,6 @@ describe('server.js', function () {
 
   after(function (done) {
     server.store.client.flushdb();
-    process.exit();
     done();
   });
 });
