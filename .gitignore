@@ -28,4 +28,5 @@ node_modules
 .lock-wscript
 mongo/
 *.rdb
-test/twitter.js
+test/selenium.js
+Procfile

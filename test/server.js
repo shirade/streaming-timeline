@@ -15,7 +15,7 @@ var cookie = require('cookie');
 var cookieParser = require('cookie-parser');
 
 var rootPath = path.join(__dirname, '..');
-var server = require(path.join(rootPath, 'lib', 'server.js'));
+var server = require(path.join(rootPath, 'app.js'));
 var client = require('socket.io-client');
 
 /***

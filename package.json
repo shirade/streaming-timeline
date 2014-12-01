@@ -1,21 +1,22 @@
 {
-  "name": "twitter-with-socketio",
+  "name": "twitter-streaming-timeline",
   "version": "0.1.0",
-  "description": "Twitter Client with Node.js, Express, Passport and Socket.io",
-  "main": "index.js",
+  "description": "Twitter Client with Node.js, Express, Socket.io etc...",
+  "main": "app.js",
   "scripts": {
+    "start": "node app.js",
     "test": "DEV=true node_modules/.bin/istanbul cover node_modules/.bin/_mocha"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/shirade/twitter-with-socketio.git"
+    "url": "https://github.com/shirade/twitter-streaming-timeline.git"
   },
   "author": "Satoshi HIRADE <shirade222@gmail.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/shirade/twitter-with-socketio/issues"
+    "url": "https://github.com/shirade/twitter-streaming-timeline/issues"
   },
-  "homepage": "https://github.com/shirade/twitter-with-socketio",
+  "homepage": "https://github.com/shirade/twitter-streaming-timeline",
   "devDependencies": {
     "istanbul": "^0.3.2",
     "mocha": "^1.21.5",

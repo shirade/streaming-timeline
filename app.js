@@ -1,8 +1,8 @@
 /*******
   Require core libraries.
 *******/
-var qs = require('querystring');
 var path = require('path');
+var url = require('url');
 
 /*******
   Require other libraries.
@@ -21,16 +21,27 @@ var session = require('express-session');
 var ConnectRedis = require('connect-redis')(session);
 
 /*******
-  Require for Testing (Requesting for mock server)
+  Prepare to use request module for Testing.
 *******/
 var request = require('request');
 
 /*******
   Prepare to use session with Redis.
 *******/
-var store = new ConnectRedis({
-  prefix: 'twitterSessionID:'
-});
+var store;
+if (process.env['REDISTOGO_URL']) {
+  var rtg = url.parse(process.env['REDISTOGO_URL']);
+  store = new ConnectRedis({
+    host: rtg.hostname,
+    port: rtg.port,
+    pass: rtg.auth.split(':')[1],
+    prefix: 'twitterSessionID:'
+  });
+} else {
+  store = new ConnectRedis({
+    prefix: 'twitterSessionID:'
+  });
+}
 store.client.on('error', function () {
   console.error('connect:redis Connection error');
 });
@@ -53,22 +64,19 @@ passport.deserializeUser(function(obj, done) {
 /*******
   Prepare to use jade and deliver static contents.
 *******/
-app.set('views', path.join(__dirname, '..', 'views'));
+app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
-app.use(express.static(path.join(__dirname, '..', 'public')));
+app.use(express.static(path.join(__dirname, 'public')));
 
 /*******
   Prepare to use Twitter Strategy.
 *******/
-var host =  process.env['HOST'] || 'localhost';
-var port = process.env['PORT'] || '3000';
-// https or http を選択できるように．
-var twitterCallbackURL = process.env['TWITTER_CALLBACK_URL'] || 'http://' + host + ':' + port + '/twitter_callback';
+var twitterCallbackURL = url.parse(process.env['TWITTER_CALLBACK_URL'] || 'http://localhost:3000/twitter_callback');
 passport.use(
   new TwitterStrategy({
     consumerKey: process.env['TWITTER_CONSUMER_KEY'],
     consumerSecret: process.env['TWITTER_CONSUMER_SECRET'],
-    callbackURL: twitterCallbackURL
+    callbackURL: twitterCallbackURL.href
     }, function(token, tokenSecret, profile, done) {
       done(null, {
         id: profile.id,
@@ -151,7 +159,7 @@ function logout (request, response) {
 app.get('/', authenticate);
 app.get('/logout', logout);
 app.get('/twitter_oauth', passport.authenticate('twitter')); 
-app.get('/twitter_callback', passport.authenticate('twitter', { 
+app.get(twitterCallbackURL.pathname, passport.authenticate('twitter', { 
   successRedirect: '/',
   failureRedirect: '/' 
 }));
@@ -163,8 +171,8 @@ app.all('/*', function (request, response) {
   response.sendStatus(405);
 });
 
-httpd.listen(port, host, function () {
-  debug('Server listens at ' + host + ':' + port);
+httpd.listen(process.env['PORT'] || 3000, function () {
+  debug('Server starts listening at ' + twitterCallbackURL.href);
 });
 
 /*******
