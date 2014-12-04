@@ -121,6 +121,9 @@ io.on('connect', function(socket){
         });
       } else {
         twit.get('statuses/home_timeline', {
+          /**
+            The number below decides how many tweets you get at first.
+          **/
           count: 20
         }, function (error, timeline, response) {
           io.to(socket.id).emit('tweet(s)', timeline);

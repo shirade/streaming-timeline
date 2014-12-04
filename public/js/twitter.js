@@ -1,28 +1,19 @@
-// socketio 用のサーバでも良いのでは？
-// 独立したテストを考える．
-// どのテスト方法が楽か考えてみる．
-// テストしやすいコードはどんなものかをもう一度考えてみる．
 (function () {
   var socket = io();
   socket.on('tweet(s)', function (msg) {
     var timeline = $('#timeline');
     if (msg.length === 1) {
       timeline.prepend(createTweetLi(msg[0]));
-      var tweet = $('.tweet');
-      tweet.eq(0).show();
-      tweet.eq(5).hide();
     } else {
       msg.map(function (tweet, index) {
         timeline.append(createTweetLi(tweet));
-        if (index < 5) $('.tweet').eq(index).show();
       });
     }
   }).on('delete', function (tweet) { 
     $('#' + tweet.id).remove();
-    $('.tweet:eq(4)').show();
   }).on('error', function () {
-    var timeline = $('#timeline');
-    timeline.prepend('<li class="error">A error has occured. Please re-login.</li>');
+    $('.tweet').remove();
+    $('#timeline').prepend('<li class="error">A error has occured. Please re-login.</li>');
   });
   
   function createTweetLi (tweet) {
