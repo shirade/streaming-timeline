@@ -262,6 +262,7 @@ describe('server.js', function () {
   });
 
   after(function (done) {
+    //server.httpd.close();
     server.store.client.flushdb();
     done();
   });

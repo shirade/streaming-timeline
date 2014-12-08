@@ -175,7 +175,7 @@ app.all('/*', function (request, response) {
 });
 
 httpd.listen(process.env['PORT'] || 3000, function () {
-  debug('Server starts listening at ' + twitterCallbackURL.href);
+  debug('Server starts listening');
 });
 
 /*******
@@ -189,5 +189,6 @@ process.on('uncaughtException', function(error) {
   Export modules to test.
 *******/
 module.exports = {
+  httpd: httpd,
   store: store
 };
