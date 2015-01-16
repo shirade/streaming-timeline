@@ -156,7 +156,7 @@ function authenticate (request, response) {
 
 function logout (request, response) {
   request.logout();
-  response.redirect(301, '/');
+  response.redirect(302, '/');
 };
 
 app.get('/', authenticate);
