@@ -10,7 +10,7 @@ var url = require('url');
 var express = require('express');
 var app = express();
 var httpd = require('http').Server(app);
-var debug = require('debug')('lib::server');
+var debug = require('debug')('app');
 var passport = require('passport');
 var TwitterStrategy = require('passport-twitter').Strategy;
 var Twit = require('twit');
@@ -21,7 +21,7 @@ var session = require('express-session');
 var ConnectRedis = require('connect-redis')(session);
 
 /*******
-  Prepare to use request module for Testing.
+  Prepare to use req module for Testing.
 *******/
 var request = require('request');
 
@@ -42,9 +42,7 @@ if (process.env['REDISTOGO_URL']) {
     prefix: 'twitterSessionID:'
   });
 }
-store.client.on('error', function () {
-  console.error('connect:redis Connection error');
-});
+store.client.on('error', debug);
 var cookieSecret = process.env['COOKIE_SECRET'] || 'secret';
 app.use(session({
   secret: cookieSecret,
@@ -67,6 +65,7 @@ passport.deserializeUser(function(obj, done) {
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'bower_components')));
 
 /*******
   Prepare to use Twitter Strategy.
@@ -112,11 +111,9 @@ io.on('connect', function(socket){
         io.to(socket.id).emit('tweet(s)', [tweet]);
       }).on('delete', function (data) {
         io.to(socket.id).emit('delete', data.delete.status);
-      }).on('error', function (error) {
-        console.error(error);
-      });
+      }).on('error', debug);
       if (process.env['DEV']) {
-        request({url:'http://localhost:50000/home_timeline.json', json:true}, function (error, response, timeline) {
+        req({url:'http://localhost:50000/home_timeline.json', json:true}, function (error, res, timeline) {
           io.to(socket.id).emit('tweet(s)', timeline);
         });
       } else {
@@ -125,7 +122,7 @@ io.on('connect', function(socket){
             The number below decides how many tweets you get at first.
           **/
           count: 20
-        }, function (error, timeline, response) {
+        }, function (error, timeline, res) {
           io.to(socket.id).emit('tweet(s)', timeline);
         });
       }
@@ -144,19 +141,19 @@ io.on('connect', function(socket){
 /*******
   Server
 *******/
-function authenticate (request, response) {
-  if (request.isAuthenticated()) {
-    debug(request.sessionID + ': Authenticated');
-    response.render('home');
+function authenticate (req, res) {
+  if (req.isAuthenticated()) {
+    debug(req.sessionID + ': Authenticated');
+    res.render('home');
   } else {
-    debug(request.sessionID + ': Not authenticated');
-    response.render('index');
+    debug(req.sessionID + ': Not authenticated');
+    res.render('index');
   }
 };
 
-function logout (request, response) {
-  request.logout();
-  response.redirect(302, '/');
+function logout (req, res) {
+  req.logout();
+  res.redirect(302, '/');
 };
 
 app.get('/', authenticate);
@@ -167,11 +164,11 @@ app.get(twitterCallbackURL.pathname, passport.authenticate('twitter', {
   failureRedirect: '/' 
 }));
 
-app.get('/*', function (request, response) {
-  response.sendStatus(404);
+app.get('/*', function (req, res) {
+  res.sendStatus(404);
 });
-app.all('/*', function (request, response) {
-  response.sendStatus(405);
+app.all('/*', function (req, res) {
+  res.sendStatus(405);
 });
 
 httpd.listen(process.env['PORT'] || 3000, function () {
@@ -181,9 +178,7 @@ httpd.listen(process.env['PORT'] || 3000, function () {
 /*******
   Catching uncaghtExceptions
 *******/
-process.on('uncaughtException', function(error) {
-  console.error(error);
-});
+process.on('uncaughtException', debug);
 
 /*******
   Export modules to test.

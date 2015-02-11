@@ -1,25 +1,16 @@
-<!DOCTYPE html>
-html
-  head
-    title= 'Timeline Streaming - Home'
-    meta(charset='utf-8')
-    link(rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css')
-    link(rel='stylesheet' href='/css/twitter.css')
-    script(src='//ajax.googleapis.com/ajax/libs/jquery/2.0.0/jquery.min.js')
-    script(src='/socket.io/socket.io.js')
-    script(src='/js/twitter.js')
-  body
-    .site-wrapper
-      .site-wrapper-inner
-        .cover-container
-          .masthead.clearfix
-            .inner
-              h3.masthead-brand Timeline Streaming
-              ul.nav.masthead-nav
-                li
-                  a(href='/logout') Logout
-          .inner.cover
-            ul#timeline
-          .mastfoot
-            .inner
-              p &copy; 2014 Satoshi Hirade
+extends ./layout.jade
+
+block title
+  title= 'Timeline Streaming - Home'
+
+block script
+  script(src='/socket.io/socket.io.js')
+  script(src='/javascripts/home.js')
+
+block nav
+  ul.nav.masthead-nav
+    li
+      a(href='/logout') Logout
+
+block content
+  ul#timeline

@@ -53,98 +53,7 @@ function setSession (response, callback) {
 /***
   The followings are test codes of index.js
 ***/
-describe('server.js', function () {
-  before(function (done) {
-    server.store.client.flushdb();
-    done();
-  });
-
-  describe('before login', function () {
-    it('/ - should return index.jade', function (done) {
-      var html = jade.renderFile(path.join(rootPath, 'views', 'index.jade'), {});
-      request.get('http://localhost:3000/', function (error, response, body) {
-        if (error) done(error);
-        assert.strictEqual(response.statusCode, 200);
-        assert.equal(body, html);
-        done();
-      });
-    });
-
-    it('/css/twitter.css - should return twitter.css', function (done) {
-      request.get('http://localhost:3000/css/twitter.css', function (error, response, body) {
-        if (error) done(error);
-        assert.strictEqual(response.statusCode, 200);
-        var css = fs.readFileSync(path.join(rootPath, 'public', 'css', 'twitter.css'));
-        assert.strictEqual(body, css.toString());
-        done();
-      });
-    });
-  });
-
-  describe('after login', function () {
-    before(function (done) {
-      request('http://localhost:3000/', function (error, response, body) {
-        if (error) done(error);
-        setSession(response, function (error) {
-          done(error);
-        });
-      });
-    });
-
-    it('/ - should return home.jade', function (done) {
-      var html = jade.renderFile(path.join(rootPath, 'views', 'home.jade'), {});
-      request.get('http://localhost:3000/', function (error, response, body) {
-        if (error) done(error);
-        assert.strictEqual(response.statusCode, 200);
-        assert.equal(body, html);
-        done();
-      });
-    });
-
-    it('/css/twitter.css - should return twitter.css', function (done) {
-      request.get('http://localhost:3000/css/twitter.css', function (error, response, body) {
-        if (error) done(error);
-        assert.strictEqual(response.statusCode, 200);
-        var css = fs.readFileSync(path.join(rootPath, 'public', 'css', 'twitter.css'));
-        assert.strictEqual(body, css.toString());
-        done();
-      });
-    });
-
-    it('/js/twitter.js - should return twitter.js', function (done) {
-      request.get('http://localhost:3000/js/twitter.js', function (error, response, body) {
-        if (error) done(error);
-        assert.strictEqual(response.statusCode, 200);
-        var js = fs.readFileSync(path.join(rootPath, 'public', 'js', 'twitter.js'));
-        assert.strictEqual(body, js.toString());
-        done();
-      });
-    });
-  });
-  
-  describe('logout', function () {
-    before(function (done) {
-      request('http://localhost:3000/', function (error, response, body) {
-        if (error) done(error);
-        setSession(response, function (error) {
-          if (error) done(error);
-          done();
-        });
-      });
-    });
-
-    it('/logout - should return index.jade', function (done) {
-      var html = jade.renderFile(path.join(rootPath, 'views', 'index.jade'), {});
-      request.get({url:'http://localhost:3000/logout', followRedirect :false}, function (error, response, body) {
-        if (error) done(error);
-        assert.strictEqual(response.statusCode, 302);
-        // assert.equal(body, 'Moved Permanently. Redirecting to /');
-        done();
-      });
-    });
-  });
-
-
+describe('app.js', function () {
   function verifyAbnormalResponse (response, body, expected) {
     assert.strictEqual(response.statusCode, expected['status-code']);
     var regexp = new RegExp(expected['content-type']);
@@ -153,7 +62,7 @@ describe('server.js', function () {
   }
 
   describe('abnormal cases', function () {
-    it('/get, should returns 404 not found', function (done) {
+    it('GET /get, should returns 404', function (done) {
       request.get('http://localhost:3000/get', function (error, response, body) {
         if (error) done(error);
         verifyAbnormalResponse(response, body, {'status-code': 404, 'content-type': 'text/plain', 'body': 'Not Found'});
@@ -161,7 +70,7 @@ describe('server.js', function () {
       });
     });
 
-    it('/post, should returns 400 bad request', function (done) {
+    it('POST /post, should returns 405', function (done) {
       request.post('http://localhost:3000/post', function (error, response, body) {
         if (error) done(error);
         verifyAbnormalResponse(response, body, {'status-code': 405, 'content-type': 'text/plain', 'body': 'Method Not Allowed'});
@@ -169,7 +78,7 @@ describe('server.js', function () {
       });
     });
 
-    it('/put, should returns 400 bad request', function (done) {
+    it('PUT /put, should returns 405', function (done) {
       request.put('http://localhost:3000/put', function (error, response, body) {
         if (error) done(error);   
         verifyAbnormalResponse(response, body, {'status-code': 405, 'content-type': 'text/plain', 'body': 'Method Not Allowed'});
@@ -177,7 +86,7 @@ describe('server.js', function () {
       });
     });
 
-    it('/delete, should returns 400 bad request', function (done) {
+    it('DELETE /delete, should returns 405', function (done) {
       request.del('http://localhost:3000/delete', function (error, response, body) {
         if (error) done(error);
         verifyAbnormalResponse(response, body, {'status-code': 405, 'content-type': 'text/plain', 'body': 'Method Not Allowed'});
@@ -186,7 +95,7 @@ describe('server.js', function () {
     });
   });
 
-  describe('socketio test', function () {
+  describe.skip('socketio test', function () {
     var socket, myAgent, expected;
     before(function (done) {
       this.timeout(5 * 1000);
